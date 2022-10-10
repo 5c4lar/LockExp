@@ -348,7 +348,7 @@ fun createPlot(data: Map<String, Any>) : Plot {
 
 fun main() {
   val minThreads = 4
-  val maxThreads = 4
+  val maxThreads = 8
   val data = mutableMapOf<String, MutableList<Any>>()
   for (numThreads in minThreads..maxThreads){
     for (lockFactory in listOf(

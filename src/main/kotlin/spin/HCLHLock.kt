@@ -95,6 +95,11 @@ class HCLHLock : Lock {
     // promote pred node to current
     currNode.set(node)
     predNode.set(null)
+    // Fix when some threads exit but the Node is still in the queue
+    val localQueue = localQueues[ThreadID.cluster]
+    if (localQueue.get() == currNode.get()) {
+      currNode.get().isSuccessorMustWait = false
+    }
     myNode!!.isSuccessorMustWait = false
   }
 
