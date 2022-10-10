@@ -19,18 +19,8 @@ import java.util.concurrent.locks.Lock
  * @author Maurice Herlihy
  */
 class MCSLock : Lock {
-  var queue: AtomicReference<QNode?>
-  var myNode: ThreadLocal<QNode>
-
-  init {
-    queue = AtomicReference(null)
-    // initialize thread-local variable
-    myNode = object : ThreadLocal<QNode>() {
-      override fun initialValue(): QNode {
-        return QNode()
-      }
-    }
-  }
+  private var queue: AtomicReference<QNode?> = AtomicReference(null)
+  private var myNode: ThreadLocal<QNode> = ThreadLocal.withInitial { QNode() }
 
   override fun lock() {
     val qnode = myNode.get()
@@ -78,7 +68,9 @@ class MCSLock : Lock {
 
   class QNode {
     // Queue node inner class
+    @Volatile
     var locked = false
+    @Volatile
     var next: QNode? = null
   }
 }

@@ -33,20 +33,12 @@ class HCLHLock : Lock {
   /**
    * My current QNode
    */
-  var currNode: ThreadLocal<QNode?> = object : ThreadLocal<QNode?>() {
-    override fun initialValue(): QNode {
-      return QNode()
-    }
-  }
+  var currNode: ThreadLocal<QNode> = ThreadLocal.withInitial { QNode() }
 
   /**
    * My predecessor QNode
    */
-  var predNode: ThreadLocal<QNode?> = object : ThreadLocal<QNode?>() {
-    override fun initialValue(): QNode? {
-      return null
-    }
-  }
+  var predNode: ThreadLocal<QNode?> = ThreadLocal.withInitial { null }
 
   /** Creates a new instance of HCLHLock  */
   init {

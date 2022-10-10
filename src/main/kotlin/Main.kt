@@ -355,16 +355,24 @@ fun main() {
   val maxThreads = 4
   val data = mutableMapOf<String, MutableList<Any>>()
   for (numThreads in minThreads..maxThreads){
-    for ((name, lock) in listOf<Pair<String, ()-> Lock>>(
-      Pair("TASLock") { TASLock() },
-      Pair("TTASLock") { TTASLock() },
-      Pair("BackoffLock") { BackoffLock() },
-      Pair("ALock") { ALock(numThreads) },
-      Pair("CLHLock") {CLHLock()},
-      Pair("MCSLock") {MCSLock()}
+    for (lockFactory in listOf<()-> Lock>(
+      { ALock(numThreads) },
+      { BackoffLock() },
+      { CLHLock() },
+      { CompositeLock() },
+      { CompositeFastPathLock() },
+      { HBOLock() },
+      { HCLHLock() },
+      { MCSLock() },
+      { TASLock() },
+      { TTASLock() },
+      { TOLock() },
     )) {
       repeat(10) {
-        val result = testForThreads(numThreads, lock(), 1_000_000)
+        ThreadID.reset()
+        val lock = lockFactory()
+        val name = lock.javaClass.simpleName
+        val result = testForThreads(numThreads, lock, 1_000_000)
         data.getOrPut("time") { mutableListOf<Any>() }.add(result)
         data.getOrPut("numThreads") { mutableListOf<Any>() }.add(numThreads)
         data.getOrPut("name") { mutableListOf<Any>() }.add(name)

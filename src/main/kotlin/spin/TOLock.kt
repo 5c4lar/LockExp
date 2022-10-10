@@ -19,18 +19,8 @@ import java.util.concurrent.locks.Lock
  * @author Maurice Herlihy
  */
 class TOLock : Lock {
-  var tail: AtomicReference<QNode?>
-  var myNode: ThreadLocal<QNode>
-
-  init {
-    tail = AtomicReference(null)
-    // thread-local field
-    myNode = object : ThreadLocal<QNode>() {
-      override fun initialValue(): QNode {
-        return QNode()
-      }
-    }
-  }
+  var tail: AtomicReference<QNode?> = AtomicReference(null)
+  var myNode: ThreadLocal<QNode> = ThreadLocal.withInitial { QNode() }
 
   @Throws(InterruptedException::class)
   override fun tryLock(time: Long, unit: TimeUnit): Boolean {
@@ -89,6 +79,7 @@ class TOLock : Lock {
 
   class QNode {
     // Queue node inner class
+    @Volatile
     var pred: QNode? = null
   }
 

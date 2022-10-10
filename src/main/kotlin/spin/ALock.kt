@@ -20,11 +20,7 @@ import java.util.concurrent.locks.Lock
  */
 class ALock(var size: Int) : Lock {
   // thread-local variable
-  var mySlotIndex: ThreadLocal<Int> = object : ThreadLocal<Int>() {
-    override fun initialValue(): Int {
-      return 0
-    }
-  }
+  var mySlotIndex: ThreadLocal<Int> = ThreadLocal.withInitial { 0 }
   var tail: AtomicInteger
   var flag: BooleanArray
 

@@ -25,11 +25,7 @@ open class CompositeLock : Lock {
   var tail: AtomicStampedReference<QNode?>
   var waiting: Array<QNode?>
   var random: Random
-  var myNode: ThreadLocal<QNode?> = object : ThreadLocal<QNode?>() {
-    override fun initialValue(): QNode? {
-      return null
-    }
-  }
+  var myNode: ThreadLocal<QNode?> = ThreadLocal.withInitial { null }
 
   /**
    * Creates a new instance of CompositeLock
@@ -181,7 +177,9 @@ open class CompositeLock : Lock {
   }
 
   inner class QNode {
+    @Volatile
     var state: AtomicReference<State> = AtomicReference(State.FREE)
+    @Volatile
     var pred: QNode? = null
 
   }

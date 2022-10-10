@@ -20,29 +20,11 @@ import java.util.concurrent.locks.Lock
  */
 class CLHLock : Lock {
   // most recent lock holder
-  var tail: AtomicReference<QNode>
+  private var tail: AtomicReference<QNode> = AtomicReference(QNode())
 
   // thread-local variables
-  var myNode: ThreadLocal<QNode>
-  var myPred: ThreadLocal<QNode?>
-
-  /**
-   * Constructor
-   */
-  init {
-    tail = AtomicReference(QNode())
-    // initialize thread-local variables
-    myNode = object : ThreadLocal<QNode>() {
-      override fun initialValue(): QNode {
-        return QNode()
-      }
-    }
-    myPred = object : ThreadLocal<QNode?>() {
-      override fun initialValue(): QNode? {
-        return null
-      }
-    }
-  }
+  private var myNode: ThreadLocal<QNode> = ThreadLocal.withInitial { QNode() }
+  private var myPred: ThreadLocal<QNode?> = ThreadLocal.withInitial { null }
 
   override fun lock() {
     val qnode = myNode.get() // use my node
@@ -84,6 +66,7 @@ class CLHLock : Lock {
 
   class QNode {
     // Queue node inner class
+    @Volatile
     var locked = false
   }
 }
