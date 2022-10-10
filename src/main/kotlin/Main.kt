@@ -3,16 +3,10 @@ import org.jetbrains.letsPlot.geom.geomPoint
 import org.jetbrains.letsPlot.geom.geomSmooth
 import org.jetbrains.letsPlot.intern.Plot
 import org.jetbrains.letsPlot.letsPlot
-import java.util.*
-import java.util.concurrent.ThreadLocalRandom
-import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.atomic.AtomicInteger
-import java.util.concurrent.atomic.AtomicReference
-import java.util.concurrent.locks.Condition
 import java.util.concurrent.locks.Lock
 import kotlin.concurrent.thread
 import spin.*
+//import javaspin.*
 
 //class TASLock :Lock {
 //  private var state: AtomicBoolean = AtomicBoolean(false)
@@ -315,23 +309,25 @@ class Counter(private val lock: Lock, private val limit: Int = 1_000_000) {
     private set
 
   fun reachLimit() {
-    var current = counter
-    while (current < limit) {
+    while (counter < limit) {
       lock.lock()
       try {
-        counter++
-        current = counter
+        if (counter < limit) {
+          counter++
+        }
       } finally {
         lock.unlock()
       }
     }
+//    (lock as HCLHLock)?.currNode?.get()?.isTailWhenSpliced = true
+//    (lock as HCLHLock)?.currNode?.get()?.isSuccessorMustWait = false
   }
 }
 
 fun testForThreads(numThreads:Int, lock:Lock, limit:Int = 1_000_000):Long {
   val counter = Counter(lock, limit)
   val start = System.currentTimeMillis()
-  val threads = List<Thread>(numThreads) {
+  val threads = List(numThreads) {
     thread {
       counter.reachLimit()
     }
@@ -351,32 +347,32 @@ fun createPlot(data: Map<String, Any>) : Plot {
 }
 
 fun main() {
-  val minThreads = 1
+  val minThreads = 4
   val maxThreads = 4
   val data = mutableMapOf<String, MutableList<Any>>()
   for (numThreads in minThreads..maxThreads){
-    for (lockFactory in listOf<()-> Lock>(
-      { ALock(numThreads) },
-      { BackoffLock() },
-      { CLHLock() },
-      { CompositeLock() },
-      { CompositeFastPathLock() },
-      { HBOLock() },
+    for (lockFactory in listOf(
+//      { ALock(numThreads) },
+//      { BackoffLock() },
+//      { CLHLock() },
+//      { CompositeLock() },
+//      { CompositeFastPathLock() },
+//      { HBOLock() },
       { HCLHLock() },
-      { MCSLock() },
-      { TASLock() },
-      { TTASLock() },
-      { TOLock() },
+//      { MCSLock() },
+//      { TASLock() },
+//      { TTASLock() },
+//      { TOLock() },
     )) {
       repeat(10) {
         ThreadID.reset()
         val lock = lockFactory()
         val name = lock.javaClass.simpleName
         val result = testForThreads(numThreads, lock, 1_000_000)
-        data.getOrPut("time") { mutableListOf<Any>() }.add(result)
-        data.getOrPut("numThreads") { mutableListOf<Any>() }.add(numThreads)
-        data.getOrPut("name") { mutableListOf<Any>() }.add(name)
-        println("Test for $numThreads with $name takes $result milliseconds!")
+        data.getOrPut("time") { mutableListOf() }.add(result)
+        data.getOrPut("numThreads") { mutableListOf() }.add(numThreads)
+        data.getOrPut("name") { mutableListOf() }.add(name)
+        println("Test for $numThreads threads with $name takes $result milliseconds!")
       }
     }
   }

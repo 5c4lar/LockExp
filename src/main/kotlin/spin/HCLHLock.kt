@@ -23,12 +23,14 @@ class HCLHLock : Lock {
   /**
    * List of local queues, one per cluster
    */
-  var localQueues: MutableList<AtomicReference<QNode?>>
+  @Volatile
+  private var localQueues: MutableList<AtomicReference<QNode?>> = ArrayList(MAX_CLUSTERS)
 
   /**
    * single global queue
    */
-  var globalQueue: AtomicReference<QNode?>
+  @Volatile
+  private var globalQueue: AtomicReference<QNode?>
 
   /**
    * My current QNode
@@ -42,7 +44,6 @@ class HCLHLock : Lock {
 
   /** Creates a new instance of HCLHLock  */
   init {
-    localQueues = ArrayList(MAX_CLUSTERS)
     for (i in 0 until MAX_CLUSTERS) {
       localQueues.add(AtomicReference())
     }
@@ -53,6 +54,10 @@ class HCLHLock : Lock {
   override fun lock() {
     val myNode = currNode.get()
     val localQueue = localQueues[ThreadID.cluster]
+    // Original code has a bug here! The reset done in QNode.unlock sets a
+    // wrong value for clusterID, when used by another cluster, this will
+    // be problematic. The fix is to set the clusterID in the lock method.
+    myNode.clusterID = ThreadID.cluster
     // splice my QNode into local queue
     var myPred: QNode? = null
     do {
@@ -85,19 +90,17 @@ class HCLHLock : Lock {
 
   override fun unlock() {
     val myNode = currNode.get()
-    myNode!!.isSuccessorMustWait = false
-    // promote pred node to current
     val node = predNode.get()
     node!!.unlock()
+    // promote pred node to current
     currNode.set(node)
+    predNode.set(null)
+    myNode!!.isSuccessorMustWait = false
   }
 
   class QNode {
-    var state: AtomicInteger
-
-    init {
-      state = AtomicInteger(0)
-    }
+    @Volatile
+    var state: AtomicInteger = AtomicInteger(0)
 
     fun waitForGrantOrClusterMaster(): Boolean {
       val myCluster = ThreadID.cluster
