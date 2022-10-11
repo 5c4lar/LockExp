@@ -62,7 +62,7 @@ class HCLHLock : Lock {
     val localQueue = localQueues[ThreadID.cluster]
 
     // splice my QNode into local queue
-    var myPred: QNode? = null
+    var myPred: QNode?
     do {
       myPred = localQueue.get()
     } while (!localQueue.compareAndSet(myPred, myNode))
@@ -76,7 +76,7 @@ class HCLHLock : Lock {
     }
     // At this point I am the cluster master.
     // Splice local queue into global queue.
-    var localTail: QNode? = null
+    var localTail: QNode?
     do {
       myPred = globalQueue.get()
       localTail = localQueue.get()
@@ -120,7 +120,7 @@ class HCLHLock : Lock {
     }
 
     fun unlock() {
-      var oldState = 0
+      var oldState: Int
       var newState = ThreadID.cluster
       // successorMustWait = true;
       newState = newState or SMW_MASK
