@@ -336,30 +336,11 @@ fun testForThreads(numThreads:Int, lock:Lock, limit:Int = 1_000_000, executor: E
   for (i in 0 until numThreads) {
     executor.submit {
       counter.reachLimit()
-      (lock as HCLHLock)?.currNode!!.get().isSuccessorMustWait = false
       barrier.await()
-      println("Thread finished with state " +
-          "${(lock as HCLHLock)
-            .localQueues
-            .slice(0 .. ( numThreads - 1 ) / 2)
-            .map { it.get()?.state?.toInt()?.toUInt()?.toString(16) }}")
+      (lock as HCLHLock)?.currNode?.get()?.isSuccessorMustWait = false
     }
   }
   barrier.await()
-//  val threads = List(numThreads) {
-//    thread {
-////      println("Thread $it started with ID ${ThreadID.get()} cluster ${ThreadID.cluster}")
-//      counter.reachLimit()
-//      barrier.await()
-//      println("Thread $it finished with state " +
-//          "${(lock as HCLHLock)
-//            .localQueues
-//            .slice(0 .. ( numThreads - 1 ) / 2)
-//            .map { it.get()?.state?.toInt()?.toUInt()?.toString(16) }}")
-//    }
-//  }
-//  barrier.await()
-//  threads.forEach { it.join() }
   val end = System.currentTimeMillis()
   val totalTime =  end - start
   assert(counter.counter == limit)
@@ -369,29 +350,29 @@ fun testForThreads(numThreads:Int, lock:Lock, limit:Int = 1_000_000, executor: E
 fun createPlot(data: Map<String, Any>) : Plot {
   var plot = letsPlot(data) { x="numThreads"; y="time"; color="name" }
   plot += geomPoint {color="name"}
-  plot += geomSmooth(method="loess", span=0.5, size=1.0) { color="name"; group="name" }
+  plot += geomSmooth(method="loess", span=0.5, size=1.0, ymin=0) { color="name"; group="name" }
   return plot
 }
 
 fun main() {
-  val minThreads = 6
-  val maxThreads = 10
+  val minThreads = 1
+  val maxThreads = 4
   val data = mutableMapOf<String, MutableList<Any>>()
   for (numThreads in minThreads..maxThreads){
-    val executor = Executors.newFixedThreadPool(numThreads)
     for (lockFactory in listOf(
-//      { ALock(numThreads) },
-//      { BackoffLock() },
-//      { CLHLock() },
-//      { CompositeLock() },
-//      { CompositeFastPathLock() },
-//      { HBOLock() },
+      { ALock(numThreads) },
+      { BackoffLock() },
+      { CLHLock() },
+      { CompositeLock() },
+      { CompositeFastPathLock() },
+      { HBOLock() },
       { HCLHLock() },
-//      { MCSLock() },
-//      { TASLock() },
-//      { TTASLock() },
-//      { TOLock() },
+      { MCSLock() },
+      { TASLock() },
+      { TTASLock() },
+      { TOLock() },
     )) {
+      val executor = Executors.newFixedThreadPool(numThreads)
       repeat(10) {
         ThreadID.reset()
         val lock = lockFactory()
@@ -402,6 +383,7 @@ fun main() {
         data.getOrPut("name") { mutableListOf() }.add(name)
         println("Test for $numThreads threads with $name takes $result milliseconds!")
       }
+      executor.shutdownNow()
     }
   }
   val fig = createPlot(data)
