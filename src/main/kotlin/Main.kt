@@ -6,6 +6,8 @@ import org.jetbrains.letsPlot.letsPlot
 import java.util.concurrent.locks.Lock
 import kotlin.concurrent.thread
 import spin.*
+import java.util.concurrent.CyclicBarrier
+
 //import javaspin.*
 
 //class TASLock :Lock {
@@ -327,12 +329,21 @@ class Counter(private val lock: Lock, private val limit: Int = 1_000_000) {
 fun testForThreads(numThreads:Int, lock:Lock, limit:Int = 1_000_000):Long {
   val counter = Counter(lock, limit)
   val start = System.currentTimeMillis()
+  val barrier = CyclicBarrier(numThreads + 1)
   val threads = List(numThreads) {
     thread {
+//      println("Thread $it started with ID ${ThreadID.get()} cluster ${ThreadID.cluster}")
       counter.reachLimit()
+      barrier.await()
+//      println("Thread $it finished with state " +
+//          "${(lock as HCLHLock)
+//            .localQueues
+//            .slice(0 until numThreads / 2)
+//            .map { it.get()?.state?.toInt()?.toUInt()?.toString(16) }}")
     }
   }
-  threads.forEach { it.join() }
+  barrier.await()
+//  threads.forEach { it.join() }
   val end = System.currentTimeMillis()
   val totalTime =  end - start
   assert(counter.counter == limit)
@@ -364,7 +375,7 @@ fun main() {
 //      { TTASLock() },
 //      { TOLock() },
     )) {
-      repeat(10) {
+      repeat(30) {
         ThreadID.reset()
         val lock = lockFactory()
         val name = lock.javaClass.simpleName
