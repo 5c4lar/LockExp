@@ -336,7 +336,13 @@ fun testForThreads(numThreads:Int, lock:Lock, limit:Int = 1_000_000, executor: E
   for (i in 0 until numThreads) {
     executor.submit {
       counter.reachLimit()
+      (lock as HCLHLock)?.currNode!!.get().isSuccessorMustWait = false
       barrier.await()
+      println("Thread finished with state " +
+          "${(lock as HCLHLock)
+            .localQueues
+            .slice(0 .. ( numThreads - 1 ) / 2)
+            .map { it.get()?.state?.toInt()?.toUInt()?.toString(16) }}")
     }
   }
   barrier.await()
@@ -368,8 +374,8 @@ fun createPlot(data: Map<String, Any>) : Plot {
 }
 
 fun main() {
-  val minThreads = 4
-  val maxThreads = 8
+  val minThreads = 6
+  val maxThreads = 10
   val data = mutableMapOf<String, MutableList<Any>>()
   for (numThreads in minThreads..maxThreads){
     val executor = Executors.newFixedThreadPool(numThreads)
@@ -386,7 +392,7 @@ fun main() {
 //      { TTASLock() },
 //      { TOLock() },
     )) {
-      repeat(30) {
+      repeat(10) {
         ThreadID.reset()
         val lock = lockFactory()
         val name = lock.javaClass.simpleName

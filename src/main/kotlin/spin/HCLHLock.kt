@@ -64,6 +64,7 @@ class HCLHLock : Lock {
     // splice my QNode into local queue
     var myPred: QNode?
     do {
+//      myPred = localQueue.compareAndExchange(myNode, null)
       myPred = localQueue.get()
     } while (!localQueue.compareAndSet(myPred, myNode))
     if (myPred != null) {
@@ -80,6 +81,7 @@ class HCLHLock : Lock {
     do {
       myPred = globalQueue.get()
       localTail = localQueue.get()
+//      myPred = globalQueue.compareAndExchange(myNode, localTail)
     } while (!globalQueue.compareAndSet(myPred, localTail))
     // inform successor it is the new master
     localTail!!.isTailWhenSpliced = true
