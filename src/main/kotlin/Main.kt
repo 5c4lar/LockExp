@@ -7,6 +7,9 @@ import java.util.concurrent.locks.Lock
 import kotlin.concurrent.thread
 import spin.*
 import java.util.concurrent.CyclicBarrier
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 
 //import javaspin.*
 
@@ -326,23 +329,30 @@ class Counter(private val lock: Lock, private val limit: Int = 1_000_000) {
   }
 }
 
-fun testForThreads(numThreads:Int, lock:Lock, limit:Int = 1_000_000):Long {
+fun testForThreads(numThreads:Int, lock:Lock, limit:Int = 1_000_000, executor: ExecutorService):Long {
   val counter = Counter(lock, limit)
   val start = System.currentTimeMillis()
   val barrier = CyclicBarrier(numThreads + 1)
-  val threads = List(numThreads) {
-    thread {
-//      println("Thread $it started with ID ${ThreadID.get()} cluster ${ThreadID.cluster}")
+  for (i in 0 until numThreads) {
+    executor.submit {
       counter.reachLimit()
       barrier.await()
-//      println("Thread $it finished with state " +
-//          "${(lock as HCLHLock)
-//            .localQueues
-//            .slice(0 until numThreads / 2)
-//            .map { it.get()?.state?.toInt()?.toUInt()?.toString(16) }}")
     }
   }
   barrier.await()
+//  val threads = List(numThreads) {
+//    thread {
+////      println("Thread $it started with ID ${ThreadID.get()} cluster ${ThreadID.cluster}")
+//      counter.reachLimit()
+//      barrier.await()
+//      println("Thread $it finished with state " +
+//          "${(lock as HCLHLock)
+//            .localQueues
+//            .slice(0 .. ( numThreads - 1 ) / 2)
+//            .map { it.get()?.state?.toInt()?.toUInt()?.toString(16) }}")
+//    }
+//  }
+//  barrier.await()
 //  threads.forEach { it.join() }
   val end = System.currentTimeMillis()
   val totalTime =  end - start
@@ -362,6 +372,7 @@ fun main() {
   val maxThreads = 8
   val data = mutableMapOf<String, MutableList<Any>>()
   for (numThreads in minThreads..maxThreads){
+    val executor = Executors.newFixedThreadPool(numThreads)
     for (lockFactory in listOf(
 //      { ALock(numThreads) },
 //      { BackoffLock() },
@@ -379,7 +390,7 @@ fun main() {
         ThreadID.reset()
         val lock = lockFactory()
         val name = lock.javaClass.simpleName
-        val result = testForThreads(numThreads, lock, 1_000_000)
+        val result = testForThreads(numThreads, lock, 1_000_000, executor)
         data.getOrPut("time") { mutableListOf() }.add(result)
         data.getOrPut("numThreads") { mutableListOf() }.add(numThreads)
         data.getOrPut("name") { mutableListOf() }.add(name)

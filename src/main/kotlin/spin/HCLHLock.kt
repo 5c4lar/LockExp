@@ -94,9 +94,6 @@ class HCLHLock : Lock {
   override fun unlock() {
     val myNode = currNode.get()
     val node = predNode.get()
-    val prevQueue = localQueues[node!!.clusterID]
-    prevQueue.compareAndSet(node, null)
-    globalQueue.compareAndSet(node, myNode)
     node!!.unlock()
     // promote pred node to current
     currNode.set(node)
