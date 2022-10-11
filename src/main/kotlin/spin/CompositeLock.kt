@@ -142,10 +142,10 @@ open class CompositeLock : Lock {
   }
 
   @Throws(TimeoutException::class)
-  private fun waitForPredecessor(pred: QNode?, node: QNode?, startTime: Long, patience: Long) {
+  private fun waitForPredecessor(predNode: QNode?, node: QNode?, startTime: Long, patience: Long) {
     // wait for predecessor to release lock
-    var pred = pred
-    val stamp = intArrayOf(0)
+    var pred = predNode
+    // val stamp = intArrayOf(0)
     if (pred == null) {
       myNode.set(node)
       return
