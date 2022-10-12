@@ -56,7 +56,7 @@ fun testForThreads(numThreads: Int, lock: Lock, limit: Int = 1_000_000, executor
 fun createPlot(data: Map<String, Any>): Plot {
   var plot = letsPlot(data) { x = "numThreads"; y = "time"; color = "name" }
   plot += geomPoint { color = "name" }
-  plot += geomSmooth(method = "loess", span = 0.5, size = 1.0, ymin = 0) { color = "name"; group = "name" }
+  plot += geomSmooth(method = "loess", span = 0.5, size = 1.0, ymin = 0, alpha = 0) { color = "name"; group = "name" }
   return plot
 }
 
