@@ -186,7 +186,7 @@ open class CompositeLock : Lock {
 
   companion object {
     private const val SIZE = 4
-    private const val MIN_BACKOFF = 1024
+    private const val MIN_BACKOFF = 1
     private const val MAX_BACKOFF = 256 * MIN_BACKOFF
   }
 }

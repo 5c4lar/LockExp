@@ -67,7 +67,7 @@ class BackoffLock : Lock {
   }
 
   companion object {
-    private const val MIN_DELAY = 32
-    private const val MAX_DELAY = 1024
+    private const val MIN_DELAY = 1
+    private const val MAX_DELAY = 256 * MIN_DELAY
   }
 }
