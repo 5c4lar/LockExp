@@ -1,3 +1,3 @@
 
-rootProject.name = "Assignment6_spinlock"
+rootProject.name = "LockExp"
 
