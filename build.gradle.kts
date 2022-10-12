@@ -2,6 +2,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
   kotlin("jvm") version "1.7.20"
+  kotlin("plugin.serialization") version "1.7.20"
   java
   application
 }
@@ -20,6 +21,7 @@ dependencies {
   implementation("org.jetbrains.lets-plot:lets-plot-kotlin-jvm:4.1.0")
   implementation("org.slf4j:slf4j-simple:2.0.3")
   implementation("org.jetbrains.kotlinx:kotlinx-cli:0.3.5")
+  implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.4.0")
 }
 
 tasks.test {
