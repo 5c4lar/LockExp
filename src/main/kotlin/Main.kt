@@ -90,7 +90,6 @@ fun main(args: Array<String>) {
   )
   val lockNameFactoryMap = lockNames.zip(lockList).toMap()
   val lockFactoryNameMap = lockList.zip(lockNames).toMap()
-  println(lockNameFactoryMap)
   val parser = ArgParser("Locks Experiments")
   val minThreads =
     parser.option(ArgType.Int, fullName = "min", shortName = "m", description = "Min number of threads").default(1)
