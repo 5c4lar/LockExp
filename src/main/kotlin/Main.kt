@@ -89,7 +89,6 @@ fun main(args: Array<String>) {
     "TOLock"
   )
   val lockNameFactoryMap = lockNames.zip(lockList).toMap()
-  val lockFactoryNameMap = lockList.zip(lockNames).toMap()
   val parser = ArgParser("Locks Experiments")
   val minThreads =
     parser.option(ArgType.Int, fullName = "min", shortName = "m", description = "Min number of threads").default(1)
@@ -101,11 +100,11 @@ fun main(args: Array<String>) {
   val numTrials =
     parser.option(ArgType.Int, fullName = "trials", shortName = "t", description = "Number of trials").default(10)
   val locks = parser.option(
-    ArgType.Choice<(Int) -> Lock>(lockList, { lockNameFactoryMap[it]!! }, { lockFactoryNameMap[it]!! }),
+    ArgType.Choice<String>(lockNames, { it }, { it }),
     fullName = "locks",
     shortName = "L",
     description = "Locks to test"
-  ).delimiter(",").default(lockList)
+  ).delimiter(",").default(lockNames)
   val output =
     parser.option(ArgType.String, fullName = "output", shortName = "o", description = "Output file").default("plot")
   val outputFormat = parser.option(
@@ -113,16 +112,15 @@ fun main(args: Array<String>) {
     fullName = "format",
     shortName = "f",
     description = "Output format"
-  ).default("png")
+  ).default("html")
   parser.parse(args)
   val data = mutableMapOf<String, MutableList<Any>>()
   for (numThreads in minThreads.value..maxThreads.value step step.value) {
     val executor = Executors.newFixedThreadPool(numThreads)
-    for (lockFactory in locks.value) {
+    for (name in locks.value) {
       repeat(numTrials.value) {
         ThreadID.reset()
-        val lock = lockFactory(numThreads)
-        val name = lock.javaClass.simpleName
+        val lock = lockNameFactoryMap[name]!!.invoke(numThreads)
         val result = testForThreads(numThreads, lock, limit.value, executor)
         data.getOrPut("time") { mutableListOf() }.add(result)
         data.getOrPut("numThreads") { mutableListOf() }.add(numThreads)
