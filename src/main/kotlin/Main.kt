@@ -40,10 +40,10 @@ fun testForThreads(numThreads: Int, lock: Lock, limit: Int = 1_000_000, executor
   for (i in 0 until numThreads) {
     executor.submit {
       counter.reachLimit()
-      barrier.await()
       (lock as HCLHLock).let {
-        it.currNode.get()?.isSuccessorMustWait = false
+        it.stop()
       }
+      barrier.await()
     }
   }
   barrier.await()

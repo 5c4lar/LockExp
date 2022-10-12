@@ -32,6 +32,9 @@ class HCLHLock : Lock {
   @Volatile
   var globalQueue: AtomicReference<QNode?>
 
+  @Volatile
+  var stopped: Boolean = false
+
   /**
    * My current QNode
    */
@@ -86,7 +89,8 @@ class HCLHLock : Lock {
     // inform successor it is the new master
     localTail!!.isTailWhenSpliced = true
     // wait for predecessor to release lock
-    while (myPred!!.isSuccessorMustWait) {
+    while (myPred!!.isSuccessorMustWait && !stopped) {
+      // spin
     }
     // I have the lock. Save QNode just released by previous leader
     predNode.set(myPred)
@@ -201,6 +205,10 @@ class HCLHLock : Lock {
 
   override fun newCondition(): Condition {
     throw UnsupportedOperationException()
+  }
+
+  fun stop() {
+    stopped = true
   }
 
   companion object {
