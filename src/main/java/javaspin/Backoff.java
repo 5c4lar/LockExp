@@ -32,7 +32,7 @@ public class Backoff {
       throw new IllegalArgumentException("max must be greater than min");
     }
     minDelay = min;
-    maxDelay = min;
+    maxDelay = max;
     limit = minDelay;
     random = new Random();
   }

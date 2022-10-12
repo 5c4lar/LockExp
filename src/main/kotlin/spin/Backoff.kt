@@ -16,37 +16,46 @@ import java.util.*
  * common to many locking classes.
  * @author Maurice Herlihy
  */
+/**
+ * Prepare to pause for random duration.
+ * @param min smallest back-off
+ * @param max largest back-off
+ */
 class Backoff(min: Int, max: Int) {
-  val minDelay: Int
-  val maxDelay: Int
-  var limit // wait between limit and 2*limit
-      : Int
-  val random // add randomness to wait
-      : Random
+    private val minDelay: Int
+    private val maxDelay: Int
+    private var limit // wait between limit and 2*limit
+            : Int
+    private val random // add randomness to wait
+            : Random
 
-  /**
-   * Prepare to pause for random duration.
-   * @param min smallest back-off
-   * @param max largest back-off
-   */
-  init {
-    require(max >= min) { "max must be greater than min" }
-    minDelay = min
-    maxDelay = min
-    limit = minDelay
-    random = Random()
-  }
-
-  /**
-   * Backoff for random duration.
-   * @throws java.lang.InterruptedException
-   */
-  @Throws(InterruptedException::class)
-  fun backoff() {
-    val delay = random.nextInt(limit)
-    if (limit < maxDelay) { // double limit if less than max
-      limit = 2 * limit
+    init {
+        require(max >= min) { "max must be greater than min" }
+        minDelay = MIN_DELAY ?: min
+        maxDelay = MAX_DELAY ?: max
+        limit = minDelay
+        random = Random()
     }
-    Thread.sleep(delay.toLong())
-  }
+
+    /**
+     * Backoff for random duration.
+     * @throws java.lang.InterruptedException
+     */
+    @Throws(InterruptedException::class)
+    fun backoff() {
+        val delay = random.nextInt(limit)
+        if (limit < maxDelay) { // double limit if less than max
+            limit *= 2
+        }
+        Thread.sleep(delay.toLong())
+    }
+
+    companion object {
+        var MIN_DELAY: Int? = null
+        var MAX_DELAY: Int? = null
+            get() {
+                return if (MIN_DELAY == null) null else MIN_DELAY!! * 128
+            }
+            private set
+    }
 }
