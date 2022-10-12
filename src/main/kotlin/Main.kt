@@ -41,7 +41,9 @@ fun testForThreads(numThreads: Int, lock: Lock, limit: Int = 1_000_000, executor
     executor.submit {
       counter.reachLimit()
       barrier.await()
-      (lock as HCLHLock)?.currNode?.get()?.isSuccessorMustWait = false
+      (lock as HCLHLock).let {
+        it.currNode.get()?.isSuccessorMustWait = false
+      }
     }
   }
   barrier.await()
@@ -101,10 +103,18 @@ fun main(args: Array<String>) {
     parser.option(ArgType.Int, fullName = "trials", shortName = "t", description = "Number of trials").default(10)
   val locks = parser.option(
     ArgType.Choice<(Int) -> Lock>(lockList, { lockNameFactoryMap[it]!! }, { lockFactoryNameMap[it]!! }),
-    fullName = "locks", shortName = "L", description = "Locks to test"
+    fullName = "locks",
+    shortName = "L",
+    description = "Locks to test"
   ).delimiter(",").default(lockList)
-  val output = parser.option(ArgType.String, fullName = "output", shortName = "o", description = "Output file").default("plot")
-  val outputFormat = parser.option(ArgType.Choice<String>(listOf("png", "pdf", "svg", "jpeg", "tiff", "webp"), { it }, { it }), fullName = "format", shortName = "f", description = "Output format").default("png")
+  val output =
+    parser.option(ArgType.String, fullName = "output", shortName = "o", description = "Output file").default("plot")
+  val outputFormat = parser.option(
+    ArgType.Choice<String>(listOf("png", "html", "svg", "jpeg", "tiff"), { it }, { it }),
+    fullName = "format",
+    shortName = "f",
+    description = "Output format"
+  ).default("png")
   parser.parse(args)
   val data = mutableMapOf<String, MutableList<Any>>()
   for (numThreads in minThreads.value..maxThreads.value step step.value) {
